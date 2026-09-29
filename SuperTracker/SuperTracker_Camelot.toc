@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: SuperTracker
+## Notes: Turns on the in-world quest navigation marker (the diamond with the distance), auto-tracks the nearest quest and adds /way map pins.
+## Author: Hackblarvest
+## Version: 0.2.0
+## SavedVariables: SuperTrackerDB
+## IconAtlas: Navigation-Tracked-Icon
+
+SuperTracker.lua
