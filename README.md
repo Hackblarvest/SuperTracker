@@ -34,3 +34,7 @@ If TomTom is installed, `/way` is left to TomTom; `/stway` always works.
 
 Copy the `SuperTracker` folder into `World of Warcraft\_classic_beta_\Interface\AddOns` and log in from
 character select.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
