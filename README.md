@@ -1,4 +1,5 @@
 # SuperTracker
+n<p align="center"><img src="media/icon.png" width="160" alt="SuperTracker"></p>
 
 A small quality-of-life addon for **WoW: Forever** that restores the retail **in-world quest navigation
 marker**: the golden diamond that floats over your destination and shows the distance in yards.

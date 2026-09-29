@@ -4,6 +4,6 @@
 ## Author: Hackblarvest
 ## Version: 0.2.0
 ## SavedVariables: SuperTrackerDB
-## IconAtlas: Navigation-Tracked-Icon
+## IconTexture: Interface\AddOns\SuperTracker\icon
 
 SuperTracker.lua
