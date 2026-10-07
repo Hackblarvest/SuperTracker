@@ -20,6 +20,13 @@ a few conveniences around it.
 - **`/way` map pins:** set a map pin from chat and navigate to it straight away.
 - Settings under **Options → AddOns → SuperTracker**.
 
+## Screenshots
+
+<p align="center">
+  <img src="media/SuperTracker1.png" width="420" alt="The navigation marker in the world">
+  <img src="media/SuperTracker2.png" width="420" alt="SuperTracker settings">
+</p>
+
 ## Commands
 
 | Command | Effect |
