@@ -41,8 +41,10 @@ If TomTom is installed, `/way` is left to TomTom; `/stway` always works.
 
 ## Installation
 
-Copy the `SuperTracker` folder into `World of Warcraft\_classic_beta_\Interface\AddOns` and log in from
-character select.
+Install it with the CurseForge app ([SuperTracker on CurseForge](https://www.curseforge.com/wow/addons/supertracker)),
+or download the zip from the [latest release](https://github.com/Hackblarvest/SuperTracker/releases/latest) and copy
+the `SuperTracker` folder into `World of Warcraft\_forever_\Interface\AddOns`. New addons are picked up when you
+log in from character select.
 
 ## License
 
