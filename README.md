@@ -18,6 +18,9 @@ a few conveniences around it.
 - **Auto-track:** when nothing is tracked (a quest was turned in or abandoned, a map pin was cleared or
   reached), the nearest quest in your quest log is tracked automatically.
 - **`/way` map pins:** set a map pin from chat and navigate to it straight away.
+- **Follow the RestedXP arrow** (optional, needs RestedXP Guides): the marker follows the RestedXP guide
+  arrow, also on "go to" steps, and also when the RestedXP arrow itself is hidden. A pin you or another
+  add-on set is never replaced; once it is cleared, the marker goes back to the guide.
 - Settings under **Options → AddOns → SuperTracker**.
 
 ## Screenshots
@@ -33,6 +36,8 @@ a few conveniences around it.
 |---|---|
 | `/supertracker` | open the settings |
 | `/supertracker on` / `off` / `toggle` | turn the in-world marker on or off |
+| `/supertracker rxp` | turn following the RestedXP arrow on or off |
+| `/supertracker cpu` | show SuperTracker's CPU use (and RestedXP's and all add-ons' for comparison) |
 | `/way 42.5 66.6` | map pin at 42.5, 66.6 on your current map, and track it |
 | `/way 1429 42.5 66.6 Gryan` | map pin on a given map ID, with an optional note |
 | `/way clear` | remove the map pin |
