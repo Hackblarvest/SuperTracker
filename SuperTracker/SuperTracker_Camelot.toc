@@ -6,5 +6,7 @@
 ## SavedVariables: SuperTrackerDB
 ## OptionalDeps: RXPGuides
 ## IconAtlas: Navigation-Tracked-Icon
+## X-Curse-Project-ID: 1717606
+## X-Wago-ID: ANz7eD64
 
 SuperTracker.lua
