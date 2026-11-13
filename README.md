@@ -1,6 +1,6 @@
 # SuperTracker
 
-<p align="center"><img src="media/icon.png" width="160" alt="SuperTracker"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Hackblarvest/SuperTracker/main/media/icon.png" width="160" alt="SuperTracker"></p>
 
 A small quality-of-life addon for **WoW: Forever** that restores the retail **in-world quest navigation
 marker**: the golden diamond that floats over your destination and shows the distance in yards.
@@ -26,8 +26,8 @@ a few conveniences around it.
 ## Screenshots
 
 <p align="center">
-  <img src="media/SuperTracker1.png" width="420" alt="The navigation marker in the world">
-  <img src="media/SuperTracker2.png" width="420" alt="SuperTracker settings">
+  <img src="https://raw.githubusercontent.com/Hackblarvest/SuperTracker/main/media/SuperTracker1.png" width="420" alt="The navigation marker in the world">
+  <img src="https://raw.githubusercontent.com/Hackblarvest/SuperTracker/main/media/SuperTracker2.png" width="420" alt="SuperTracker settings">
 </p>
 
 ## Commands
@@ -48,10 +48,10 @@ If TomTom is installed, `/way` is left to TomTom; `/stway` always works.
 
 ## Installation
 
-Install it with the CurseForge app ([SuperTracker on CurseForge](https://www.curseforge.com/wow/addons/supertracker)),
-or download the zip from the [latest release](https://github.com/Hackblarvest/SuperTracker/releases/latest) and copy
-the `SuperTracker` folder into `World of Warcraft\_forever_\Interface\AddOns`. New addons are picked up when you
-log in from character select.
+Install it with the CurseForge app ([SuperTracker on CurseForge](https://www.curseforge.com/wow/addons/supertracker))
+or the Wago app ([SuperTracker on Wago](https://addons.wago.io/addons/supertracker)), or download the zip from the
+[latest release](https://github.com/Hackblarvest/SuperTracker/releases/latest) and copy the `SuperTracker` folder into
+`World of Warcraft\_forever_\Interface\AddOns`. New addons are picked up when you log in from character select.
 
 ## License
 
