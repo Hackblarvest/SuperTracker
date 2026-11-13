@@ -13,6 +13,20 @@ local function say(msg)
 	print(PREFIX .. msg)
 end
 
+-- /supertracker debug: auto-track decisions in chat and in SuperTrackerDB.debugLog (last 100 lines).
+local DEBUG_LINES = 100
+local function debugLog(msg)
+	if not db.debug then return end
+	say("debug: " .. msg)
+	local log = db.debugLog
+	if type(log) ~= "table" then
+		log = {}
+		db.debugLog = log
+	end
+	log[#log + 1] = date("%H:%M:%S ") .. msg
+	while #log > DEBUG_LINES do table.remove(log, 1) end
+end
+
 local function applyCVar()
 	local wanted = db.enabled and "1" or "0"
 	if C_CVar.GetCVar(CVAR) ~= wanted then
@@ -37,26 +51,48 @@ local function isPlain(v)
 	return v ~= nil and not (issecretvalue and issecretvalue(v))
 end
 
+-- Returns the nearest quest and its squared distance, plus how many quests have a map position and how
+-- many were checked (for /supertracker status and the debug log).
 local function nearestQuest()
 	local bestID, bestDist
+	local withPosition, checked = 0, 0
 	for i = 1, C_QuestLog.GetNumQuestLogEntries() do
 		local info = C_QuestLog.GetInfo(i)
 		local questID = info and not info.isHeader and not info.isHidden and info.questID
 		if questID and isPlain(questID) and questID > 0 and not C_QuestLog.IsQuestTask(questID) then
+			checked = checked + 1
 			local distSq, onContinent = C_QuestLog.GetDistanceSqToQuest(questID)
-			if isPlain(distSq) and isPlain(onContinent) and onContinent and (not bestDist or distSq < bestDist) then
-				bestID, bestDist = questID, distSq
+			if isPlain(distSq) and isPlain(onContinent) and onContinent then
+				withPosition = withPosition + 1
+				if not bestDist or distSq < bestDist then
+					bestID, bestDist = questID, distSq
+				end
 			end
 		end
 	end
-	return bestID
+	return bestID, bestDist, withPosition, checked
+end
+
+local function questText(questID, distSq)
+	local text = ("%s (%d)"):format(C_QuestLog.GetTitleForQuestID(questID) or "?", questID)
+	if distSq then text = text .. (", %d yd"):format(math.floor(math.sqrt(distSq) + 0.5)) end
+	return text
+end
+
+local function nearestText()
+	local questID, distSq, withPosition, checked = nearestQuest()
+	if not questID then
+		return ("no quest with a map position (%d quests checked)"):format(checked)
+	end
+	return ("%s; %d of %d quests have a map position"):format(questText(questID, distSq), withPosition, checked)
 end
 
 local pendingAutoTrack = false
 
--- Nothing tracked, or only a quest that has left the quest log (abandoned).
+-- Nothing tracked, a map pin that is gone, or a quest that has left the quest log (abandoned).
 local function needsTarget()
 	if not C_SuperTrack.IsSuperTrackingAnything() then return true end
+	if C_SuperTrack.IsSuperTrackingUserWaypoint() and not C_Map.HasUserWaypoint() then return true end
 	if C_SuperTrack.IsSuperTrackingQuest() then
 		local questID = C_SuperTrack.GetSuperTrackedQuestID()
 		return isPlain(questID) and questID > 0 and not C_QuestLog.GetLogIndexForQuestID(questID)
@@ -66,10 +102,17 @@ end
 
 local function autoTrack()
 	pendingAutoTrack = false
-	if not db.autoTrack or not needsTarget() then return end
-	local questID = nearestQuest()
+	if not db.autoTrack then return end
+	if not needsTarget() then
+		debugLog("auto-track: something is tracked, nothing to do.")
+		return
+	end
+	local questID, distSq, _, checked = nearestQuest()
 	if questID then
 		C_SuperTrack.SetSuperTrackedQuestID(questID)
+		debugLog("auto-track: tracking the nearest quest, " .. questText(questID, distSq) .. ".")
+	else
+		debugLog(("auto-track: no quest with a map position (%d quests checked)."):format(checked))
 	end
 end
 
@@ -215,6 +258,22 @@ local function followStatus()
 	if C_Map.HasUserWaypoint() then pin = isOurPin() and "SuperTracker's" or "someone else's" end
 	return ("following the RestedXP arrow: %s; arrow target: %s; map pin: %s.")
 		:format(followTicker and "on" or "off", target, pin)
+end
+
+-- What the marker is tracking right now, for /supertracker status and the debug log.
+local function trackedText()
+	if not C_SuperTrack.IsSuperTrackingAnything() then return "nothing" end
+	if C_SuperTrack.IsSuperTrackingQuest() then
+		local questID = C_SuperTrack.GetSuperTrackedQuestID()
+		if not (isPlain(questID) and questID > 0) then return "a quest" end
+		local gone = C_QuestLog.GetLogIndexForQuestID(questID) and "" or " (no longer in the quest log)"
+		return "quest " .. questText(questID) .. gone
+	end
+	if C_SuperTrack.IsSuperTrackingUserWaypoint() then
+		if not C_Map.HasUserWaypoint() then return "a map pin that is gone" end
+		return isOurPin() and "SuperTracker's map pin" or "a map pin"
+	end
+	return "something else (type " .. tostring(C_SuperTrack.GetHighestPrioritySuperTrackingType()) .. ")"
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -377,13 +436,24 @@ local function mainCommand(msg)
 		cpuReport()
 		return
 	elseif cmd == "status" then
+		say(("tracking: %s; auto-track: %s; nearest quest: %s."):format(trackedText(),
+			db.autoTrack and "on" or "off", nearestText()))
 		say(followStatus())
+		return
+	elseif cmd == "debug" then
+		db.debug = not db.debug or nil
+		if db.debug then
+			db.debugLog = {}
+			say("debug on: auto-track decisions are shown in chat and saved. /supertracker debug turns it off.")
+		else
+			say("debug off.")
+		end
 		return
 	elseif cmd == "" then
 		Settings.OpenToCategory(category:GetID())
 		return
 	else
-		say("commands: /supertracker on | off | toggle | rxp | status | cpu, /way [mapID] x y, /way clear")
+		say("commands: /supertracker on | off | toggle | rxp | status | cpu | debug, /way [mapID] x y, /way clear")
 		return
 	end
 	say("in-world navigation marker " .. (db.enabled and "on" or "off") .. ".")
@@ -408,9 +478,16 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 	elseif event == "ADDON_LOADED" and arg1 == "RXPGuides" then
 		if db and IsLoggedIn() then startFollowing() end
 	elseif event == "USER_WAYPOINT_UPDATED" then
+		if not db then return end
 		onUserWaypointUpdated()
+		local hasPin = C_Map.HasUserWaypoint()
+		if db.debug then debugLog(event .. ": map pin " .. (hasPin and "set" or "removed") .. ", tracking " .. trackedText() .. ".") end
+		-- A pin that is cleared or reached may not report SUPER_TRACKING_CHANGED, so check here as well.
+		if not hasPin then scheduleAutoTrack() end
 	elseif event == "SUPER_TRACKING_CHANGED" or event == "QUEST_REMOVED" then
-		if db then scheduleAutoTrack() end
+		if not db then return end
+		if db.debug then debugLog(event .. ": tracking " .. trackedText() .. ".") end
+		scheduleAutoTrack()
 	elseif event == "PLAYER_LOGIN" then
 		applyCVar()
 		scheduleAutoTrack(3)

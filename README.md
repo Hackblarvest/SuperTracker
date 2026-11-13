@@ -37,8 +37,9 @@ a few conveniences around it.
 | `/supertracker` | open the settings |
 | `/supertracker on` / `off` / `toggle` | turn the in-world marker on or off |
 | `/supertracker rxp` | turn following the RestedXP arrow on or off |
-| `/supertracker status` | show what SuperTracker reads from the RestedXP arrow and whose map pin is set |
+| `/supertracker status` | show what is tracked, the nearest quest, what SuperTracker reads from the RestedXP arrow and whose map pin is set |
 | `/supertracker cpu` | show SuperTracker's CPU use (and RestedXP's and all add-ons' for comparison) |
+| `/supertracker debug` | show auto-track decisions in chat, for troubleshooting (run it again to turn it off) |
 | `/way 42.5 66.6` | map pin at 42.5, 66.6 on your current map, and track it |
 | `/way 1429 42.5 66.6 Gryan` | map pin on a given map ID, with an optional note |
 | `/way clear` | remove the map pin |
