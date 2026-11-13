@@ -83,8 +83,9 @@ end
 ---------------------------------------------------------------------------------------------------
 -- Follow the RestedXP arrow (optional). RestedXP super-tracks the quest of a quest step itself, but the
 -- target of its own arrow (go-to steps) never reaches Blizzard. This mirrors that target into a map pin
--- so the in-world marker follows the guide. RXPG_ARROW.element and RXP.hideArrow are RestedXP internals,
--- not an API: if they change shape the check does nothing, and an error turns following off.
+-- so the in-world marker follows the guide. RXPG_ARROW.element and RXP.hideArrow are RestedXP internals
+-- (checked against RestedXP v4.11.36), not an API: if they change shape the check does nothing, and an
+-- error turns following off. /supertracker status shows what is read.
 -- A pin set by anyone else (/way, a map click, another add-on) is never replaced; once it is cleared the
 -- marker goes back to the arrow target.
 
@@ -105,6 +106,16 @@ local function clearOurPin()
 	pinZone, pinX, pinY = nil, nil, nil
 end
 
+-- RestedXP targets carry the map in .zone and the position as .x/.y in percent (go-to steps), or as
+-- .zx/.zy from 0 to 1 (its own in-game waypoint steps). Returns the map and 0-1 coordinates.
+local function arrowTarget(element)
+	local x, y = element.x, element.y
+	if type(x) == "number" and type(y) == "number" then
+		return element.zone, x / 100, y / 100
+	end
+	return element.zone, element.zx, element.zy
+end
+
 -- Runs every FOLLOW_INTERVAL seconds: a few table reads and no allocations unless the target changed.
 local function checkRXPArrow()
 	local arrow = _G.RXPG_ARROW
@@ -122,7 +133,7 @@ local function checkRXPArrow()
 	end
 
 	local zone, x, y
-	if element then zone, x, y = element.zone, element.zx, element.zy end
+	if element then zone, x, y = arrowTarget(element) end
 	if element == lastElement and active == lastActive and zone == lastZone and x == lastX and y == lastY then
 		return
 	end
@@ -181,6 +192,29 @@ function stopFollowing()
 		followTicker = nil
 	end
 	clearOurPin()
+end
+
+-- One line for /supertracker status and cpu: what SuperTracker reads from the RestedXP arrow.
+local function followStatus()
+	local target = "none"
+	local arrow = _G.RXPG_ARROW
+	local element = arrow and type(arrow.element) == "table" and arrow.element
+	if not arrow then
+		target = "no RestedXP arrow found"
+	elseif element then
+		local zone, x, y = arrowTarget(element)
+		if type(zone) == "number" and type(x) == "number" and type(y) == "number" then
+			target = ("map %d at %.1f, %.1f"):format(zone, x * 100, y * 100)
+		else
+			target = "unreadable (map " .. tostring(zone) .. ")"
+		end
+		local rxp = _G.RXP
+		if type(rxp) == "table" and rxp.hideArrow then target = target .. ", no active step" end
+	end
+	local pin = "none"
+	if C_Map.HasUserWaypoint() then pin = isOurPin() and "SuperTracker's" or "someone else's" end
+	return ("following the RestedXP arrow: %s; arrow target: %s; map pin: %s.")
+		:format(followTicker and "on" or "off", target, pin)
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -321,7 +355,7 @@ local function cpuReport()
 		line("RestedXP Guides", function(m) return C_AddOnProfiler.GetAddOnMetric("RXPGuides", m) end)
 	end
 	line("All add-ons", function(m) return C_AddOnProfiler.GetOverallMetric(m) end)
-	say("following the RestedXP arrow: " .. (followTicker and "on" or "off") .. ".")
+	say(followStatus())
 end
 
 ---------------------------------------------------------------------------------------------------
@@ -342,11 +376,14 @@ local function mainCommand(msg)
 	elseif cmd == "cpu" then
 		cpuReport()
 		return
+	elseif cmd == "status" then
+		say(followStatus())
+		return
 	elseif cmd == "" then
 		Settings.OpenToCategory(category:GetID())
 		return
 	else
-		say("commands: /supertracker on | off | toggle | rxp | cpu, /way [mapID] x y, /way clear")
+		say("commands: /supertracker on | off | toggle | rxp | status | cpu, /way [mapID] x y, /way clear")
 		return
 	end
 	say("in-world navigation marker " .. (db.enabled and "on" or "off") .. ".")
