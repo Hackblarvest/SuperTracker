@@ -1,6 +1,7 @@
 -- SuperTracker: turns on WoW's in-world navigation marker on WoW: Forever.
--- The client ships the full retail feature (C_Navigation + Blizzard_QuestNavigation), but the
--- showInGameNavigation CVar defaults to 0 and the option is not in the menus.
+-- The client ships the full retail feature (C_Navigation + Blizzard_QuestNavigation), but keeps the marker
+-- hidden: first through the showInGameNavigation CVar (default 0, not in the menus), and since build 71037 by
+-- removing that CVar. See applyMarker.
 
 local ADDON = ...
 local CVAR = "showInGameNavigation"
@@ -27,16 +28,51 @@ local function debugLog(msg)
 	while #log > DEBUG_LINES do table.remove(log, 1) end
 end
 
-local function applyCVar()
-	local wanted = db.enabled and "1" or "0"
-	if C_CVar.GetCVar(CVAR) ~= wanted then
-		C_CVar.SetCVar(CVAR, wanted)
+-- Since client build 71037 (2026-11-20) the showInGameNavigation CVar no longer exists. The client still works out
+-- the target's screen position and distance, but reports NavigationState.Invalid, so SuperTrackedFrame fades to
+-- alpha 0. Blizzard's own SetTargetAlphaForState then makes Invalid targets visible; SuperTrackedFrame:GetTargetAlpha
+-- already returns 0 for a target without a valid screen position. On clients that still have the CVar, the CVar is
+-- used as before and Invalid stays at Blizzard's alpha 0.
+local function cvarExists()
+	return C_CVar.GetCVar(CVAR) ~= nil
+end
+
+local function applyMarker()
+	local frame = _G.SuperTrackedFrame
+	local invalid = Enum.NavigationState and Enum.NavigationState.Invalid
+	local canOverride = frame and frame.SetTargetAlphaForState and invalid
+	if cvarExists() then
+		local wanted = db.enabled and "1" or "0"
+		if C_CVar.GetCVar(CVAR) ~= wanted then
+			C_CVar.SetCVar(CVAR, wanted)
+		end
+		if canOverride then frame:SetTargetAlphaForState(invalid, 0) end
+	elseif canOverride then
+		frame:SetTargetAlphaForState(invalid, db.enabled and 1 or 0)
 	end
+end
+
+-- For /supertracker status: how the marker is switched on, and what the client reports right now.
+local function markerStatus()
+	local method
+	if cvarExists() then
+		method = "client option " .. CVAR .. " = " .. tostring(C_CVar.GetCVar(CVAR))
+	elseif _G.SuperTrackedFrame and _G.SuperTrackedFrame.SetTargetAlphaForState then
+		method = "client option gone, SuperTracker shows Blizzard's marker itself"
+	else
+		method = "client option gone and Blizzard's marker frame not found"
+	end
+	local nav = "no target"
+	if C_Navigation.GetFrame() then
+		nav = ("state %s, on screen %s, %d yd"):format(tostring(C_Navigation.GetTargetState()),
+			C_Navigation.HasValidScreenPosition() and "yes" or "no", math.floor(C_Navigation.GetDistance() + 0.5))
+	end
+	return ("marker: %s (%s); navigation: %s."):format(db.enabled and "on" or "off", method, nav)
 end
 
 local function setEnabled(value)
 	db.enabled = value and true or false
-	applyCVar()
+	applyMarker()
 	if setting and setting:GetValue() ~= db.enabled then
 		setting:SetValue(db.enabled)
 	end
@@ -288,11 +324,11 @@ local function registerSettings()
 		"In-world navigation marker", true)
 	setting:SetValueChangedCallback(function(_, value)
 		db.enabled = value
-		applyCVar()
+		applyMarker()
 	end)
 	Settings.CreateCheckbox(category, setting,
 		"Show the marker and distance for the quest or map pin you are tracking.\n\n"
-		.. "Click a quest in the objective tracker to track it. Sets the hidden '" .. CVAR .. "' option.")
+		.. "Click a quest in the objective tracker to track it.")
 
 	local autoSetting = Settings.RegisterAddOnSetting(category, "SUPERTRACKER_AUTOTRACK", "autoTrack", db,
 		"boolean", "Auto-track nearest quest", true)
@@ -436,6 +472,7 @@ local function mainCommand(msg)
 		cpuReport()
 		return
 	elseif cmd == "status" then
+		say(markerStatus())
 		say(("tracking: %s; auto-track: %s; nearest quest: %s."):format(trackedText(),
 			db.autoTrack and "on" or "off", nearestText()))
 		say(followStatus())
@@ -477,6 +514,8 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		registerSettings()
 	elseif event == "ADDON_LOADED" and arg1 == "RXPGuides" then
 		if db and IsLoggedIn() then startFollowing() end
+	elseif event == "ADDON_LOADED" and arg1 == "Blizzard_QuestNavigation" then
+		if db then applyMarker() end
 	elseif event == "USER_WAYPOINT_UPDATED" then
 		if not db then return end
 		onUserWaypointUpdated()
@@ -489,7 +528,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		if db.debug then debugLog(event .. ": tracking " .. trackedText() .. ".") end
 		scheduleAutoTrack()
 	elseif event == "PLAYER_LOGIN" then
-		applyCVar()
+		applyMarker()
 		scheduleAutoTrack(3)
 		startFollowing()
 

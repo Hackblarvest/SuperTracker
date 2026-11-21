@@ -7,9 +7,10 @@ marker**: the golden diamond that floats over your destination and shows the dis
 
 ## Why
 
-The Forever client ships the complete retail navigation system, but the option that turns it on
-(`showInGameNavigation`) is off by default and missing from the menus. SuperTracker switches it on and adds
-a few conveniences around it.
+The Forever client ships the complete retail navigation system, but keeps the marker hidden. At first the
+option that turned it on (`showInGameNavigation`) was off by default and missing from the menus; since client
+build 71037 that option is gone altogether. SuperTracker makes Blizzard's own marker visible again and adds a
+few conveniences around it.
 
 ## Features
 
@@ -37,7 +38,7 @@ a few conveniences around it.
 | `/supertracker` | open the settings |
 | `/supertracker on` / `off` / `toggle` | turn the in-world marker on or off |
 | `/supertracker rxp` | turn following the RestedXP arrow on or off |
-| `/supertracker status` | show what is tracked, the nearest quest, what SuperTracker reads from the RestedXP arrow and whose map pin is set |
+| `/supertracker status` | show how the marker is switched on, what is tracked, the nearest quest, what SuperTracker reads from the RestedXP arrow and whose map pin is set |
 | `/supertracker cpu` | show SuperTracker's CPU use (and RestedXP's and all add-ons' for comparison) |
 | `/supertracker debug` | show auto-track decisions in chat, for troubleshooting (run it again to turn it off) |
 | `/way 42.5 66.6` | map pin at 42.5, 66.6 on your current map, and track it |
